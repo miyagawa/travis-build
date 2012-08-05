@@ -96,6 +96,7 @@ module Travis
         def perform
           chdir
           export
+          install_private_keys
           checkout
           setup if respond_to?(:setup)
           run_stages
@@ -117,6 +118,24 @@ module Travis
           env_vars.each do |line|
             shell.export_line(line)
           end
+        end
+
+        def install_private_keys
+          private_keys = Array(config.private_keys)
+          if private_keys
+            shell.execute('eval `ssh-agent`', :echo => false)
+
+            private_keys.each_with_index do |private_key, index|
+              key_name = "private_key_#{index + 1}_rsa"
+              install_private_key(key_name, private_key)
+            end
+          end
+        end
+
+        def install_private_key(key_name, key)
+          shell.execute("echo '#{key}' | base64 -d > ~/.ssh/#{key_name}", :echo => false)
+          shell.execute("chmod 600 ~/.ssh/#{key_name}", :echo => false)
+          shell.execute("ssh-add ~/.ssh/#{key_name}",   :echo => false)
         end
 
         def export_travis_specific_variables

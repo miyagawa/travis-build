@@ -186,6 +186,43 @@ describe Travis::Build::Job::Test do
     end
   end
 
+
+  describe 'install_private_keys' do
+    it "does not install any private keys" do
+      config.private_keys = nil
+      shell.expects(:excute).never
+      shell.expects(:install_private_key).never
+      job.send(:install_private_keys)
+    end
+
+    it 'installs one private key' do
+      config.private_keys = ["123"]
+      shell.expects(:execute).with('eval `ssh-agent`', :echo => false).once
+      job.expects(:install_private_key).with('private_key_1_rsa', '123').once
+      job.send(:install_private_keys)
+    end
+
+    it "install two private keys" do
+      config.private_keys = ["123", "456"]
+      shell.expects(:execute).with('eval `ssh-agent`', :echo => false).once
+      job.expects(:install_private_key).with('private_key_1_rsa', '123').once
+      job.expects(:install_private_key).with('private_key_2_rsa', '456').once
+      job.send(:install_private_keys)
+    end
+  end
+
+  describe 'install_private_key' do
+    it "installs a private key" do
+      key_name, key = 'private_key_1_rsa', '123'
+
+      shell.expects(:excute).never
+      shell.expects(:execute).with("echo '#{key}' | base64 -d > ~/.ssh/#{key_name}", :echo => false)
+      shell.expects(:execute).with("chmod 600 ~/.ssh/#{key_name}", :echo => false)
+      shell.expects(:execute).with("ssh-add ~/.ssh/#{key_name}",   :echo => false)
+      job.send(:install_private_key, key_name, key)
+    end
+  end
+
   describe 'run_stages' do
     it 'runs all the command stages in order if they return true' do
       [:before_install, :install, :before_script, :script, :after_script].each do |stage|
