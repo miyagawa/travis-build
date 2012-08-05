@@ -122,7 +122,7 @@ module Travis
 
         def install_private_keys
           private_keys = Array(config.private_keys)
-          if private_keys
+          if private_keys.any?
             shell.execute('eval `ssh-agent`', :echo => false)
 
             private_keys.each_with_index do |private_key, index|

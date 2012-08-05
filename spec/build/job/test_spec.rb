@@ -190,7 +190,7 @@ describe Travis::Build::Job::Test do
   describe 'install_private_keys' do
     it "does not install any private keys" do
       config.private_keys = nil
-      shell.expects(:excute).never
+      shell.expects(:excute).with('eval `ssh-agent`', :echo => false).never
       shell.expects(:install_private_key).never
       job.send(:install_private_keys)
     end
