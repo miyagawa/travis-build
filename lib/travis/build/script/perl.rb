@@ -13,7 +13,7 @@ module Travis
 
         def setup
           super
-          cmd "perlbrew use #{perl_version}"
+          cmd "export PLENV_VERSION=#{perl_version}"
         end
 
         def announce
